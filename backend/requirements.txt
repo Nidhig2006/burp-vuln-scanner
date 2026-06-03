@@ -1,0 +1,10 @@
+flask
+flask-cors
+flask-socketio
+flask-jwt-extended
+mysql-connector-python
+bcrypt
+python-dotenv
+requests
+beautifulsoup4
+eventlet
