@@ -40,8 +40,9 @@ A powerful **real-time web vulnerability scanner** built as a Burp Suite Extensi
 | PDF Export | jsPDF + html2canvas |
 
 ---
-
 ## 📁 Project Structure
+
+```
 burp-vuln-scanner/
 ├── burp-extension/
 │   └── extension.py          # Jython Burp Suite extension
@@ -56,27 +57,17 @@ burp-vuln-scanner/
 │       ├── headers.py        # Security headers checker
 │       ├── sensitive.py      # Sensitive data scanner
 │       ├── redirect.py       # Open redirect detector
-│       └── info_disclosure.py # Information disclosure checker
+│       └── info_disclosure.py
 ├── frontend/
 │   └── src/
 │       ├── pages/
-│       │   ├── Login.jsx
-│       │   ├── Register.jsx
-│       │   ├── Dashboard.jsx
-│       │   ├── ScanDetails.jsx
-│       │   └── Reports.jsx
 │       ├── components/
-│       │   ├── Navbar.jsx
-│       │   └── SeverityBadge.jsx
 │       ├── context/
-│       │   └── AuthContext.jsx
 │       └── utils/
-│           └── api.js
 └── database/
-├── schema.sql            # MySQL table definitions
-└── seed.sql              # Sample data
-
----
+    ├── schema.sql
+    └── seed.sql
+```
 
 ## ⚙️ Setup Instructions
 
