@@ -32,7 +32,7 @@ CORS(app, origins="*")
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "supersecretkey")
 jwt = JWTManager(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # ─── AUTH ROUTES ───────────────────────────────────────
 
