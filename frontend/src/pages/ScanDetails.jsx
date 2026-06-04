@@ -109,6 +109,10 @@ export default function ScanDetails() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8" id="scan-report">
 
+<<<<<<< HEAD
+=======
+      {/* Header */}
+>>>>>>> feature/backend
       <div className="flex items-center justify-between mb-8">
         <div>
           <button
@@ -129,6 +133,10 @@ export default function ScanDetails() {
         </button>
       </div>
 
+<<<<<<< HEAD
+=======
+      {/* Charts */}
+>>>>>>> feature/backend
       {chartData.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
@@ -172,6 +180,11 @@ export default function ScanDetails() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<<<<<<< HEAD
+=======
+
+        {/* Findings Table */}
+>>>>>>> feature/backend
         <div className="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
             <h2 className="text-white font-semibold">🚨 Findings ({findings.length})</h2>
@@ -223,6 +236,10 @@ export default function ScanDetails() {
           </div>
         </div>
 
+<<<<<<< HEAD
+=======
+        {/* Live Feed */}
+>>>>>>> feature/backend
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-800">
             <h2 className="text-white font-semibold">⚡ Live Feed</h2>
@@ -241,6 +258,10 @@ export default function ScanDetails() {
             )}
           </div>
         </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> feature/backend
       </div>
     </div>
   )
