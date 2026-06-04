@@ -1,1 +1,5 @@
+# Sensitive config files
+database/config.py
+.env
+*.env
  
