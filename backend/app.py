@@ -306,6 +306,60 @@ def test_headers():
         except Exception as e:
             results[site] = {"error": str(e), "reachable": False}
     return jsonify(results), 200
+
+# ─── HEALTH CHECK ──────────────────────────────────────
+
+@app.route("/api/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "running",
+        "message": "VulnScanner API is up"
+    }), 200
+
+
+# ─── BURP EXTENSION ROUTE ──────────────────────────────
+
+@app.route("/api/burp/finding", methods=["POST"])
+def burp_finding():
+    data = request.get_json()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT id FROM scans WHERE scan_name = 'Burp Suite Live Scan' 
+        AND status = 'running' ORDER BY started_at DESC LIMIT 1"""
+    )
+    scan = cursor.fetchone()
+    if not scan:
+        cursor.execute(
+            """INSERT INTO scans (user_id, target_url, scan_name, status) 
+            VALUES (1, %s, 'Burp Suite Live Scan', 'running')""",
+            (data.get('url', 'unknown'),)
+        )
+        conn.commit()
+        scan_id = cursor.lastrowid
+    else:
+        scan_id = scan['id']
+    cursor.close()
+    conn.close()
+
+    finding_id = create_finding(
+        scan_id,
+        data.get('url', ''),
+        data.get('parameter', ''),
+        data.get('vulnerability_type', 'INFO_DISCLOSURE'),
+        data.get('severity', 'LOW'),
+        data.get('cvss_score', 0.0),
+        'Burp Passive Scan',
+        data.get('parameter', ''),
+        'Review and fix this vulnerability'
+    )
+
+    socketio.emit('new_finding', {
+        "scan_id": scan_id,
+        "finding": data
+    })
+
+    return jsonify({"message": "Finding saved", "id": finding_id}), 201
 # ─── START SERVER ──────────────────────────────────────
 
 if __name__ == "__main__":
