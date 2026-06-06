@@ -23,6 +23,7 @@ def init_db():
             os.path.dirname(__file__), 
             '..', 
             'database', 
+            'database',
             'schema.sql'
         )
         with open(schema_path, 'r') as f:
@@ -39,4 +40,3 @@ def init_db():
         
     except Exception as e:
         print(f"Database error: {e}")
-        

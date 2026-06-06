@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import API from '../utils/api'
-<<<<<<< HEAD
-=======
-import SeverityBadge from '../components/SeverityBadge'
->>>>>>> feature/backend
 
 export default function Dashboard() {
   const [scans, setScans] = useState([])
@@ -60,16 +56,11 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
 
-<<<<<<< HEAD
-=======
-      {/* Header */}
->>>>>>> feature/backend
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white">Dashboard</h1>
         <p className="text-gray-400 mt-1">Manage and monitor your vulnerability scans</p>
       </div>
 
-<<<<<<< HEAD
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total Scans" value={scans.length} icon="🔍" color="blue" />
         <StatCard label="Running" value={scans.filter(s => s.status === 'running').length} icon="⚡" color="yellow" />
@@ -77,37 +68,6 @@ export default function Dashboard() {
         <StatCard label="Total Findings" value={scans.reduce((a, b) => a + (b.total_findings || 0), 0)} icon="🚨" color="red" />
       </div>
 
-=======
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          label="Total Scans"
-          value={scans.length}
-          icon="🔍"
-          color="blue"
-        />
-        <StatCard
-          label="Running"
-          value={scans.filter(s => s.status === 'running').length}
-          icon="⚡"
-          color="yellow"
-        />
-        <StatCard
-          label="Completed"
-          value={scans.filter(s => s.status === 'completed').length}
-          icon="✅"
-          color="green"
-        />
-        <StatCard
-          label="Total Findings"
-          value={scans.reduce((a, b) => a + (b.total_findings || 0), 0)}
-          icon="🚨"
-          color="red"
-        />
-      </div>
-
-      {/* New Scan Form */}
->>>>>>> feature/backend
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8">
         <h2 className="text-white font-semibold text-lg mb-4">🚀 Start New Scan</h2>
 
@@ -143,10 +103,6 @@ export default function Dashboard() {
         </form>
       </div>
 
-<<<<<<< HEAD
-=======
-      {/* Scans Table */}
->>>>>>> feature/backend
       <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-800">
           <h2 className="text-white font-semibold text-lg">📋 Recent Scans</h2>
@@ -183,7 +139,6 @@ export default function Dashboard() {
                     <td className="px-6 py-4">
                       <span className={`flex items-center gap-2 text-sm ${statusColor(scan.status)}`}>
                         <span className={`w-2 h-2 rounded-full ${statusDot(scan.status)}`}></span>
-<<<<<<< HEAD
                         {scan.status}
                       </span>
                     </td>
@@ -227,6 +182,3 @@ function StatCard({ label, value, icon, color }) {
     </div>
   )
 }
-=======
-                        {scan.status}
->>>>>>> feature/backend

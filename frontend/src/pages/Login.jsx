@@ -32,10 +32,7 @@ export default function Login() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-md shadow-2xl">
 
-<<<<<<< HEAD
-=======
         {/* Logo */}
->>>>>>> feature/backend
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🔍</div>
           <h1 className="text-2xl font-bold text-white">BurpVulnScanner</h1>

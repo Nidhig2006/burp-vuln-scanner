@@ -289,15 +289,23 @@ def on_join_scan(data):
 
 
 # ─── HEALTH CHECK ──────────────────────────────────────
-
-@app.route("/api/health", methods=["GET"])
-def health():
-    return jsonify({
-        "status": "running",
-        "message": "VulnScanner API is up"
-    }), 200
-
-
+@app.route("/api/test-headers", methods=["GET"])
+def test_headers():
+    import requests as req
+    sites = [
+        'http://testphp.vulnweb.com',
+        'http://google.com',
+        'http://example.com',
+        'https://httpbin.org'
+    ]
+    results = {}
+    for site in sites:
+        try:
+            res = req.get(site, timeout=10)
+            results[site] = {"status": res.status_code, "reachable": True}
+        except Exception as e:
+            results[site] = {"error": str(e), "reachable": False}
+    return jsonify(results), 200
 # ─── START SERVER ──────────────────────────────────────
 
 if __name__ == "__main__":

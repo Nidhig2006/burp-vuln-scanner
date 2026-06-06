@@ -4,10 +4,7 @@ const API = axios.create({
   baseURL: 'http://localhost:5000/api'
 })
 
-<<<<<<< HEAD
-=======
 // Attach JWT token to every request
->>>>>>> feature/backend
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -16,8 +13,4 @@ API.interceptors.request.use((config) => {
   return config
 })
 
-<<<<<<< HEAD
 export default API
-=======
-export default API
->>>>>>> feature/backend
