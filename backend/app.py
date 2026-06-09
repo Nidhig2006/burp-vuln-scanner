@@ -114,14 +114,13 @@ def start_scan():
     user_id = get_jwt_identity()
     data = request.get_json()
     target_url = data.get("target_url")
-    scan_name = data.get("scan_name", f"Scan of {target_url}")
+    scan_name = data.get("scan_name", "Scan of " + str(target_url))
 
     if not target_url:
         return jsonify({"error": "Target URL required"}), 400
 
     scan_id = create_scan(user_id, target_url, scan_name)
 
-    # Run scan in background thread
     thread = threading.Thread(
         target=run_full_scan,
         args=(scan_id, target_url)
@@ -189,8 +188,8 @@ def generate_report():
     if not scan:
         return jsonify({"error": "Scan not found"}), 404
 
-    report_name = f"Report_{scan['target_url']}_{scan_id}"
-    file_path = f"reports/{report_name}.{format.lower()}"
+    report_name = "Report_" + str(scan['target_url']) + "_" + str(scan_id)
+    file_path = "reports/" + report_name + "." + format.lower()
 
     report_id = create_report(
         scan_id, user_id,
@@ -202,6 +201,111 @@ def generate_report():
         "report_id": report_id,
         "file_path": file_path
     }), 201
+
+
+# ─── BURP EXTENSION ROUTE ──────────────────────────────
+
+@app.route("/api/burp/finding", methods=["POST"])
+def burp_finding():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data"}), 400
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """SELECT id FROM scans WHERE scan_name = 'Burp Suite Live Scan'
+            AND status = 'running' ORDER BY started_at DESC LIMIT 1"""
+        )
+        scan = cursor.fetchone()
+
+        if not scan:
+            cursor.execute(
+                """INSERT INTO scans (user_id, target_url, scan_name, status)
+                VALUES (1, %s, 'Burp Suite Live Scan', 'running')""",
+                (data.get('url', 'unknown')[:500],)
+            )
+            conn.commit()
+            scan_id = cursor.lastrowid
+        else:
+            scan_id = scan['id']
+
+        cursor.close()
+        conn.close()
+
+        vuln_type_map = {
+            "MISSING_HSTS":          "SECURITY_HEADERS",
+            "MISSING_CSP":           "SECURITY_HEADERS",
+            "MISSING_XFRAME":        "SECURITY_HEADERS",
+            "MISSING_XCTO":          "SECURITY_HEADERS",
+            "SERVER_BANNER":         "INFO_DISCLOSURE",
+            "SQL_INJECTION":         "SQL_INJECTION",
+            "XSS":                   "XSS",
+            "CORS_MISCONFIGURATION": "SECURITY_HEADERS",
+            "INSECURE_COOKIE":       "SENSITIVE_DATA",
+            "SENSITIVE_DATA":        "SENSITIVE_DATA",
+            "JWT_WEAKNESS":          "SENSITIVE_DATA",
+            "OPEN_REDIRECT":         "OPEN_REDIRECT",
+            "INFO_DISCLOSURE":       "INFO_DISCLOSURE",
+            "EXPOSED_FILE":          "INFO_DISCLOSURE",
+            "RATE_LIMIT":            "INFO_DISCLOSURE",
+        }
+
+        severity_map = {
+            "CRITICAL": "CRITICAL",
+            "HIGH":     "HIGH",
+            "MEDIUM":   "MEDIUM",
+            "LOW":      "LOW",
+            "INFO":     "INFO",
+        }
+
+        raw_type  = data.get('vulnerability_type',
+                             data.get('type', 'INFO_DISCLOSURE'))
+        mapped_type = vuln_type_map.get(raw_type, 'INFO_DISCLOSURE')
+        severity    = severity_map.get(
+            data.get('severity', 'LOW'), 'LOW'
+        )
+
+        finding_id = create_finding(
+            scan_id,
+            data.get('url', '')[:500],
+            data.get('evidence', '')[:200],
+            mapped_type,
+            severity,
+            float(data.get('cvss_score',
+                           data.get('cvss', 0.0))),
+            data.get('method', 'GET'),
+            data.get('evidence', '')[:500],
+            data.get('fix',
+                     data.get('recommendation', ''))[:500]
+        )
+
+        socketio.emit('new_finding', {
+            "scan_id": scan_id,
+            "finding": {
+                "id":                 finding_id,
+                "url":                data.get('url', ''),
+                "vulnerability_type": mapped_type,
+                "severity":           severity,
+                "confidence":         data.get('confidence', 'Firm'),
+                "cvss_score":         data.get('cvss', 0.0),
+                "cwe":                data.get('cwe', ''),
+                "owasp":              data.get('owasp', ''),
+                "evidence":           data.get('evidence', ''),
+                "impact":             data.get('impact', ''),
+                "recommendation":     data.get('fix', ''),
+            }
+        })
+
+        return jsonify({
+            "message": "Finding saved",
+            "id": finding_id
+        }), 201
+
+    except Exception as e:
+        print("Burp finding error: " + str(e))
+        return jsonify({"error": str(e)}), 500
 
 
 # ─── FULL SCAN RUNNER ──────────────────────────────────
@@ -219,7 +323,7 @@ def run_full_scan(scan_id, target_url):
     scanners = [
         ("Security Headers", scan_headers),
         ("SQL Injection",    scan_sqli),
-        ("XSS",             scan_xss),
+        ("XSS",              scan_xss),
         ("Sensitive Data",   scan_sensitive),
         ("Open Redirect",    scan_redirect),
         ("Info Disclosure",  scan_info_disclosure),
@@ -229,8 +333,8 @@ def run_full_scan(scan_id, target_url):
         try:
             socketio.emit('scan_progress', {
                 "scan_id": scan_id,
-                "module": name,
-                "status": "running"
+                "module":  name,
+                "status":  "running"
             })
 
             findings = scanner_fn(target_url, session)
@@ -251,20 +355,18 @@ def run_full_scan(scan_id, target_url):
                 all_findings.append(finding)
                 total += 1
 
-                # Emit each finding in real-time
                 socketio.emit('new_finding', {
                     "scan_id": scan_id,
                     "finding": finding
                 })
 
         except Exception as e:
-            print(f"Error in {name} scanner: {e}")
+            print("Error in " + name + " scanner: " + str(e))
             continue
 
-    # Mark scan complete
     update_scan_status(scan_id, "completed", total)
     socketio.emit('scan_complete', {
-        "scan_id": scan_id,
+        "scan_id":        scan_id,
         "total_findings": total
     })
 
@@ -273,13 +375,13 @@ def run_full_scan(scan_id, target_url):
 
 @socketio.on('connect')
 def on_connect():
-    print(f"Client connected: {request.sid}")
+    print("Client connected: " + request.sid)
     emit('connected', {"message": "Connected to VulnScanner"})
 
 
 @socketio.on('disconnect')
 def on_disconnect():
-    print(f"Client disconnected: {request.sid}")
+    print("Client disconnected: " + request.sid)
 
 
 @socketio.on('join_scan')
@@ -289,77 +391,15 @@ def on_join_scan(data):
 
 
 # ─── HEALTH CHECK ──────────────────────────────────────
-@app.route("/api/test-headers", methods=["GET"])
-def test_headers():
-    import requests as req
-    sites = [
-        'http://testphp.vulnweb.com',
-        'http://google.com',
-        'http://example.com',
-        'https://httpbin.org'
-    ]
-    results = {}
-    for site in sites:
-        try:
-            res = req.get(site, timeout=10)
-            results[site] = {"status": res.status_code, "reachable": True}
-        except Exception as e:
-            results[site] = {"error": str(e), "reachable": False}
-    return jsonify(results), 200
-
-# ─── HEALTH CHECK ──────────────────────────────────────
 
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({
-        "status": "running",
+        "status":  "running",
         "message": "VulnScanner API is up"
     }), 200
 
 
-# ─── BURP EXTENSION ROUTE ──────────────────────────────
-
-@app.route("/api/burp/finding", methods=["POST"])
-def burp_finding():
-    data = request.get_json()
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        """SELECT id FROM scans WHERE scan_name = 'Burp Suite Live Scan' 
-        AND status = 'running' ORDER BY started_at DESC LIMIT 1"""
-    )
-    scan = cursor.fetchone()
-    if not scan:
-        cursor.execute(
-            """INSERT INTO scans (user_id, target_url, scan_name, status) 
-            VALUES (1, %s, 'Burp Suite Live Scan', 'running')""",
-            (data.get('url', 'unknown'),)
-        )
-        conn.commit()
-        scan_id = cursor.lastrowid
-    else:
-        scan_id = scan['id']
-    cursor.close()
-    conn.close()
-
-    finding_id = create_finding(
-        scan_id,
-        data.get('url', ''),
-        data.get('parameter', ''),
-        data.get('vulnerability_type', 'INFO_DISCLOSURE'),
-        data.get('severity', 'LOW'),
-        data.get('cvss_score', 0.0),
-        'Burp Passive Scan',
-        data.get('parameter', ''),
-        'Review and fix this vulnerability'
-    )
-
-    socketio.emit('new_finding', {
-        "scan_id": scan_id,
-        "finding": data
-    })
-
-    return jsonify({"message": "Finding saved", "id": finding_id}), 201
 # ─── START SERVER ──────────────────────────────────────
 
 if __name__ == "__main__":
