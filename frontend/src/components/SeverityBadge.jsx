@@ -1,14 +1,21 @@
 export default function SeverityBadge({ severity }) {
-  const colors = {
-    CRITICAL: 'bg-red-900/50 text-red-300 border border-red-700',
-    HIGH:     'bg-orange-900/50 text-orange-300 border border-orange-700',
-    MEDIUM:   'bg-yellow-900/50 text-yellow-300 border border-yellow-700',
-    LOW:      'bg-blue-900/50 text-blue-300 border border-blue-700',
-    INFO:     'bg-gray-800 text-gray-300 border border-gray-600',
+  const styles = {
+    CRITICAL: 'bg-red-100 text-red-700 border border-red-200',
+    HIGH:     'bg-orange-100 text-orange-700 border border-orange-200',
+    MEDIUM:   'bg-yellow-100 text-yellow-700 border border-yellow-200',
+    LOW:      'bg-blue-100 text-blue-700 border border-blue-200',
+    INFO:     'bg-gray-100 text-gray-600 border border-gray-200',
+  }
+  const icons = {
+    CRITICAL: '🔴',
+    HIGH:     '🟠',
+    MEDIUM:   '🟡',
+    LOW:      '🔵',
+    INFO:     '⚪',
   }
   return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${colors[severity] || colors.INFO}`}>
-      {severity}
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${styles[severity] || styles.INFO}`}>
+      {icons[severity]} {severity}
     </span>
   )
 }

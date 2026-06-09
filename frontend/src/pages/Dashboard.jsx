@@ -10,9 +10,7 @@ export default function Dashboard() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  useEffect(() => {
-    fetchScans()
-  }, [])
+  useEffect(() => { fetchScans() }, [])
 
   const fetchScans = async () => {
     try {
@@ -41,144 +39,177 @@ export default function Dashboard() {
     }
   }
 
-  const statusColor = (status) => {
-    if (status === 'running') return 'text-yellow-400'
-    if (status === 'completed') return 'text-green-400'
-    return 'text-red-400'
+  const statusConfig = {
+    running:   { color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500 animate-pulse' },
+    completed: { color: 'text-green-600', bg: 'bg-green-50 border-green-200', dot: 'bg-green-500' },
+    stopped:   { color: 'text-red-600',   bg: 'bg-red-50 border-red-200',     dot: 'bg-red-500' },
   }
 
-  const statusDot = (status) => {
-    if (status === 'running') return 'bg-yellow-400 animate-pulse'
-    if (status === 'completed') return 'bg-green-400'
-    return 'bg-red-400'
-  }
+  const totalFindings = scans.reduce((a, b) => a + (b.total_findings || 0), 0)
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="text-gray-400 mt-1">Manage and monitor your vulnerability scans</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Total Scans" value={scans.length} icon="🔍" color="blue" />
-        <StatCard label="Running" value={scans.filter(s => s.status === 'running').length} icon="⚡" color="yellow" />
-        <StatCard label="Completed" value={scans.filter(s => s.status === 'completed').length} icon="✅" color="green" />
-        <StatCard label="Total Findings" value={scans.reduce((a, b) => a + (b.total_findings || 0), 0)} icon="🚨" color="red" />
-      </div>
-
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8">
-        <h2 className="text-white font-semibold text-lg mb-4">🚀 Start New Scan</h2>
-
-        {error && (
-          <div className="bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg mb-4 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleStartScan} className="flex flex-col md:flex-row gap-4">
-          <input
-            type="url"
-            placeholder="https://target-website.com"
-            value={scanForm.target_url}
-            onChange={(e) => setScanForm({ ...scanForm, target_url: e.target.value })}
-            className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Scan name (optional)"
-            value={scanForm.scan_name}
-            onChange={(e) => setScanForm({ ...scanForm, scan_name: e.target.value })}
-            className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition"
-          />
-          <button
-            type="submit"
-            disabled={scanning}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition disabled:opacity-50 whitespace-nowrap"
-          >
-            {scanning ? '⏳ Starting...' : '▶ Start Scan'}
-          </button>
-        </form>
-      </div>
-
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-800">
-          <h2 className="text-white font-semibold text-lg">📋 Recent Scans</h2>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Security Dashboard</h1>
+          <p className="text-gray-500 mt-1">Monitor and manage your vulnerability scans</p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading scans...</div>
-        ) : scans.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            No scans yet. Start your first scan above!
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <StatCard icon="🔍" label="Total Scans" value={scans.length} color="blue" />
+          <StatCard icon="⚡" label="Running" value={scans.filter(s => s.status === 'running').length} color="amber" />
+          <StatCard icon="✅" label="Completed" value={scans.filter(s => s.status === 'completed').length} color="green" />
+          <StatCard icon="🚨" label="Total Findings" value={totalFindings} color="red" />
+        </div>
+
+        {/* New Scan */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
+              <span>🚀</span>
+            </div>
+            <div>
+              <h2 className="text-gray-900 font-semibold">Start New Scan</h2>
+              <p className="text-gray-400 text-xs">Enter a target URL to begin vulnerability scanning</p>
+            </div>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-800/50">
-                <tr>
-                  <th className="text-left text-gray-400 text-sm px-6 py-3">Scan Name</th>
-                  <th className="text-left text-gray-400 text-sm px-6 py-3">Target URL</th>
-                  <th className="text-left text-gray-400 text-sm px-6 py-3">Status</th>
-                  <th className="text-left text-gray-400 text-sm px-6 py-3">Findings</th>
-                  <th className="text-left text-gray-400 text-sm px-6 py-3">Started</th>
-                  <th className="text-left text-gray-400 text-sm px-6 py-3">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {scans.map((scan) => (
-                  <tr key={scan.id} className="hover:bg-gray-800/30 transition">
-                    <td className="px-6 py-4 text-white text-sm font-medium">
-                      {scan.scan_name || 'Unnamed Scan'}
-                    </td>
-                    <td className="px-6 py-4 text-blue-400 text-sm truncate max-w-xs">
-                      {scan.target_url}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`flex items-center gap-2 text-sm ${statusColor(scan.status)}`}>
-                        <span className={`w-2 h-2 rounded-full ${statusDot(scan.status)}`}></span>
-                        {scan.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-white text-sm">
-                      {scan.total_findings || 0}
-                    </td>
-                    <td className="px-6 py-4 text-gray-400 text-sm">
-                      {new Date(scan.started_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => navigate(`/scan/${scan.id}`)}
-                        className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-sm px-3 py-1.5 rounded-lg transition"
-                      >
-                        View →
-                      </button>
-                    </td>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <form onSubmit={handleStartScan} className="flex flex-col md:flex-row gap-3">
+            <input
+              type="url"
+              placeholder="https://target-website.com"
+              value={scanForm.target_url}
+              onChange={(e) => setScanForm({ ...scanForm, target_url: e.target.value })}
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Scan name (optional)"
+              value={scanForm.scan_name}
+              onChange={(e) => setScanForm({ ...scanForm, scan_name: e.target.value })}
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
+            />
+            <button
+              type="submit"
+              disabled={scanning}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl transition shadow-sm disabled:opacity-50 whitespace-nowrap text-sm"
+            >
+              {scanning ? '⏳ Starting...' : '▶ Start Scan'}
+            </button>
+          </form>
+        </div>
+
+        {/* Scans Table */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
+                <span>📋</span>
+              </div>
+              <h2 className="text-gray-900 font-semibold">Recent Scans</h2>
+            </div>
+            <span className="text-gray-400 text-sm">{scans.length} total</span>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-16">
+              <div className="text-4xl mb-3">⏳</div>
+              <p className="text-gray-400">Loading scans...</p>
+            </div>
+          ) : scans.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="text-gray-500 font-medium">No scans yet</p>
+              <p className="text-gray-400 text-sm mt-1">Start your first scan above</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    {['Scan Name', 'Target URL', 'Status', 'Findings', 'Started', 'Action'].map(h => (
+                      <th key={h} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {scans.map((scan) => {
+                    const sc = statusConfig[scan.status] || statusConfig.stopped
+                    return (
+                      <tr key={scan.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 text-gray-900 text-sm font-medium">
+                          {scan.scan_name || 'Unnamed Scan'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-blue-600 text-sm truncate max-w-xs block">
+                            {scan.target_url}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${sc.bg} ${sc.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}></span>
+                            {scan.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-sm font-semibold ${scan.total_findings > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                            {scan.total_findings || 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-400 text-sm">
+                          {new Date(scan.started_at).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => navigate(`/scan/${scan.id}`)}
+                            className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-lg transition border border-blue-200"
+                          >
+                            View Details →
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-function StatCard({ label, value, icon, color }) {
+function StatCard({ icon, label, value, color }) {
   const colors = {
-    blue: 'border-blue-800 bg-blue-900/20',
-    yellow: 'border-yellow-800 bg-yellow-900/20',
-    green: 'border-green-800 bg-green-900/20',
-    red: 'border-red-800 bg-red-900/20',
+    blue:  'bg-blue-50 border-blue-100',
+    amber: 'bg-amber-50 border-amber-100',
+    green: 'bg-green-50 border-green-100',
+    red:   'bg-red-50 border-red-100',
+  }
+  const textColors = {
+    blue:  'text-blue-700',
+    amber: 'text-amber-700',
+    green: 'text-green-700',
+    red:   'text-red-700',
   }
   return (
-    <div className={`border rounded-2xl p-5 ${colors[color]}`}>
-      <div className="text-2xl mb-2">{icon}</div>
-      <div className="text-3xl font-bold text-white">{value}</div>
-      <div className="text-gray-400 text-sm mt-1">{label}</div>
+    <div className={`rounded-2xl border p-5 ${colors[color]}`}>
+      <div className="text-2xl mb-3">{icon}</div>
+      <div className={`text-3xl font-bold ${textColors[color]}`}>{value}</div>
+      <div className="text-gray-500 text-sm mt-1 font-medium">{label}</div>
     </div>
   )
 }
